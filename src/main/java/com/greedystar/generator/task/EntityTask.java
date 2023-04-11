@@ -45,7 +45,7 @@ public class EntityTask extends AbstractTask {
         String remarks = null;
         if (Mode.ENTITY_MAIN.equals(mode)) {
             className = ConfigUtil.getConfiguration().getName().getEntity().replace(Constant.PLACEHOLDER, invoker.getClassName());
-            remarks = invoker.getTableInfos().get(0).getTableRemarks();
+            remarks = invoker.getTableName();
         } else if (Mode.ENTITY_PARENT.equals(mode)) {
             className = ConfigUtil.getConfiguration().getName().getEntity().replace(Constant.PLACEHOLDER, invoker.getParentClassName());
             remarks = invoker.getParentTableInfos().get(0).getTableRemarks();

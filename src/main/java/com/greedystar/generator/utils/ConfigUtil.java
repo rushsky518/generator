@@ -51,20 +51,15 @@ public class ConfigUtil {
      * 通过generator.yaml读取配置
      */
     private static void readConfigurationFromFile() {
-        try {
-            URL url = ConfigUtil.class.getClassLoader().getResource("generator.yaml");
-            if (null == url || url.getPath().contains("jar")) {
-                System.err.println("Can not find file named 'generator.yaml' under resources path, please make sure that you have defined that file.");
-                System.exit(0);
-            } else {
-                String configStr = StringUtil.line2Camel(IOUtils.toString((InputStream) url.getContent()));
-                InputStream inputStream = IOUtils.toInputStream(configStr);
-                Yaml yaml = new Yaml();
-                ConfigUtil.setConfiguration(yaml.loadAs(inputStream, Configuration.class));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        URL url = ConfigUtil.class.getClassLoader().getResource("generator.yaml");
+        if (null == url || url.getPath().contains("jar")) {
+            System.err.println("Can not find file named 'generator.yaml' under resources path, please make sure that you have defined that file.");
             System.exit(0);
+        } else {
+            InputStream is = ConfigUtil.class.getClassLoader().getResourceAsStream("generator.yaml");
+            Yaml yaml = new Yaml();
+            Configuration conf = yaml.loadAs(is, Configuration.class);
+            ConfigUtil.setConfiguration(conf);
         }
     }
 
