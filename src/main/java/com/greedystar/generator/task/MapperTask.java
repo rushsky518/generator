@@ -3,6 +3,7 @@ package com.greedystar.generator.task;
 import com.greedystar.generator.entity.ColumnInfo;
 import com.greedystar.generator.entity.Constant;
 import com.greedystar.generator.invoker.base.AbstractInvoker;
+import com.greedystar.generator.invoker.base.TableInfo;
 import com.greedystar.generator.task.base.AbstractTask;
 import com.greedystar.generator.utils.*;
 import freemarker.template.TemplateException;
@@ -97,15 +98,17 @@ public class MapperTask extends AbstractTask {
      */
     public String columnMap() {
         StringBuilder sb = new StringBuilder();
-        invoker.getTableInfo().getColumnsInfo().forEach(ForEachUtil.withIndex((info, index) -> {
+        TableInfo tableInfo = invoker.getTableInfo();
+        tableInfo.getColumnsInfo().forEach(ForEachUtil.withIndex((info, index) -> {
             if (info.getColumnName().equals(invoker.getForeignKey())) {
                 return;
             }
             sb.append(index == 0 ? "" : Constant.SPACE_8);
             sb.append(String.format("`%s`.`%s`,\n", invoker.getTableName(), info.getColumnName()));
         }));
-        if (invoker.getParentTableInfo().getColumnsInfo() != null) {
-            invoker.getParentTableInfo().getColumnsInfo().forEach(ForEachUtil.withIndex((info, index) -> {
+        TableInfo parentTableInfo = invoker.getParentTableInfo();
+        if (parentTableInfo != null && parentTableInfo.getColumnsInfo() != null) {
+            parentTableInfo.getColumnsInfo().forEach(ForEachUtil.withIndex((info, index) -> {
                 sb.append(Constant.SPACE_8);
                 if (!StringUtil.isEmpty(invoker.getRelationalTableName()) || !StringUtil.isEmpty(invoker.getParentForeignKey())) {
                     sb.append(String.format("`%s`.`%s` AS `%ss.%s`,\n", invoker.getParentTableName(), info.getColumnName(),
