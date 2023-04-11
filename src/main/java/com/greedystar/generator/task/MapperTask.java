@@ -33,9 +33,10 @@ public class MapperTask extends AbstractTask {
         mapperData.put("DaoClassName", ConfigUtil.getConfiguration().getName().getDao()
                 .replace(Constant.PLACEHOLDER, invoker.getClassName()));
         mapperData.put("TableName", invoker.getTableName());
-        mapperData.put("PrimaryKey", getPrimaryKeyColumnInfo(invoker.getTableInfos()).getColumnName());
-        mapperData.put("WhereId", "#{" + getPrimaryKeyColumnInfo(invoker.getTableInfos()).getPropertyName() + "}");
-        mapperData.put("PrimaryColumn", getPrimaryKeyColumnInfo(invoker.getTableInfos()));
+        ColumnInfo pkInfo = getPrimaryKeyColumnInfo(invoker.getTableInfo().getColumnsInfo());
+        mapperData.put("PrimaryKey", pkInfo.getColumnName());
+        mapperData.put("WhereId", "#{" + pkInfo.getPropertyName() + "}");
+        mapperData.put("PrimaryColumn", pkInfo);
         mapperData.put("InsertProperties", insertProperties());
         mapperData.put("ColumnMap", columnMap());
         mapperData.put("ResultMap", resultMap());
@@ -96,15 +97,15 @@ public class MapperTask extends AbstractTask {
      */
     public String columnMap() {
         StringBuilder sb = new StringBuilder();
-        invoker.getTableInfos().forEach(ForEachUtil.withIndex((info, index) -> {
+        invoker.getTableInfo().getColumnsInfo().forEach(ForEachUtil.withIndex((info, index) -> {
             if (info.getColumnName().equals(invoker.getForeignKey())) {
                 return;
             }
             sb.append(index == 0 ? "" : Constant.SPACE_8);
             sb.append(String.format("`%s`.`%s`,\n", invoker.getTableName(), info.getColumnName()));
         }));
-        if (invoker.getParentTableInfos() != null) {
-            invoker.getParentTableInfos().forEach(ForEachUtil.withIndex((info, index) -> {
+        if (invoker.getParentTableInfo().getColumnsInfo() != null) {
+            invoker.getParentTableInfo().getColumnsInfo().forEach(ForEachUtil.withIndex((info, index) -> {
                 sb.append(Constant.SPACE_8);
                 if (!StringUtil.isEmpty(invoker.getRelationalTableName()) || !StringUtil.isEmpty(invoker.getParentForeignKey())) {
                     sb.append(String.format("`%s`.`%s` AS `%ss.%s`,\n", invoker.getParentTableName(), info.getColumnName(),
@@ -115,7 +116,7 @@ public class MapperTask extends AbstractTask {
                 }
             }));
         }
-        return sb.toString().substring(0, sb.toString().length() - 2);
+        return sb.substring(0, sb.toString().length() - 2);
     }
 
     /**
@@ -125,7 +126,7 @@ public class MapperTask extends AbstractTask {
      */
     public String resultMap() {
         StringBuilder sb = new StringBuilder();
-        invoker.getTableInfos().forEach(ForEachUtil.withIndex((info, index) -> {
+        invoker.getTableInfo().getColumnsInfo().forEach(ForEachUtil.withIndex((info, index) -> {
             if (info.getColumnName().equals(invoker.getForeignKey())) {
                 return;
             }
@@ -149,7 +150,7 @@ public class MapperTask extends AbstractTask {
         sb.append(String.format("<association property=\"%s\" javaType=\"%s.%s\">\n", StringUtil.firstToLowerCase(invoker.getParentClassName()),
                 ConfigUtil.getConfiguration().getPackageName() + "." + ConfigUtil.getConfiguration().getPath().getEntity(),
                 invoker.getParentClassName()));
-        invoker.getParentTableInfos().forEach(ForEachUtil.withIndex((info, index) -> {
+        invoker.getParentTableInfo().getColumnsInfo().forEach(ForEachUtil.withIndex((info, index) -> {
             if (info.isPrimaryKey()) {
                 sb.append(Constant.SPACE_12).append(String.format("<id column=\"%s.%s\" property=\"%s\" />\n",
                         StringUtil.firstToLowerCase(invoker.getParentClassName()), info.getColumnName(), info.getPropertyName()));
@@ -172,7 +173,7 @@ public class MapperTask extends AbstractTask {
         sb.append(String.format("<collection property=\"%ss\" ofType=\"%s.%s\" >\n ", StringUtil.firstToLowerCase(invoker.getParentClassName()),
                 ConfigUtil.getConfiguration().getPackageName() + "." + ConfigUtil.getConfiguration().getPath().getEntity(),
                 invoker.getParentClassName()));
-        invoker.getParentTableInfos().forEach(ForEachUtil.withIndex((info, index) -> {
+        invoker.getParentTableInfo().getColumnsInfo().forEach(ForEachUtil.withIndex((info, index) -> {
             if (info.isPrimaryKey()) {
                 sb.append(Constant.SPACE_12).append(String.format("<id column=\"%ss.%s\" property=\"%s\" />\n",
                         StringUtil.firstToLowerCase(invoker.getParentClassName()), info.getColumnName(), info.getPropertyName()));
@@ -192,7 +193,7 @@ public class MapperTask extends AbstractTask {
      */
     public String insertProperties() {
         StringBuilder sb = new StringBuilder();
-        invoker.getTableInfos().forEach(ForEachUtil.withIndex((info, index) -> {
+        invoker.getTableInfo().getColumnsInfo().forEach(ForEachUtil.withIndex((info, index) -> {
             sb.append(index == 0 ? "" : Constant.SPACE_12);
             sb.append(String.format("`%s`,\n", info.getColumnName()));
         }));
@@ -206,12 +207,12 @@ public class MapperTask extends AbstractTask {
      */
     public String insertValues() {
         StringBuilder sb = new StringBuilder();
-        invoker.getTableInfos().forEach(ForEachUtil.withIndex((info, index) -> {
+        invoker.getTableInfo().getColumnsInfo().forEach(ForEachUtil.withIndex((info, index) -> {
             sb.append(index == 0 ? "" : Constant.SPACE_12);
             if (StringUtil.isEmpty(invoker.getRelationalTableName()) && !StringUtil.isEmpty(invoker.getForeignKey())) {
                 if (info.getColumnName().equals(invoker.getForeignKey())) {
                     sb.append(String.format("#{%s.%s},\n", StringUtil.firstToLowerCase(invoker.getParentClassName()),
-                            getPrimaryKeyColumnInfo(invoker.getParentTableInfos()).getPropertyName()));
+                            getPrimaryKeyColumnInfo(invoker.getParentTableInfo().getColumnsInfo()).getPropertyName()));
                 } else {
                     sb.append(String.format("#{%s},\n", info.getPropertyName()));
                 }
@@ -229,13 +230,13 @@ public class MapperTask extends AbstractTask {
      */
     public String insertBatchValues() {
         StringBuilder sb = new StringBuilder();
-        invoker.getTableInfos().forEach(ForEachUtil.withIndex((info, index) -> {
+        invoker.getTableInfo().getColumnsInfo().forEach(ForEachUtil.withIndex((info, index) -> {
             sb.append(index == 0 ? "" : Constant.SPACE_12);
             if (StringUtil.isEmpty(invoker.getRelationalTableName()) && !StringUtil.isEmpty(invoker.getForeignKey())) {
                 if (info.getColumnName().equals(invoker.getForeignKey())) {
                     sb.append(String.format("#{%s.%s.%s},\n", StringUtil.firstToLowerCase(invoker.getClassName()),
                             StringUtil.firstToLowerCase(invoker.getParentClassName()),
-                            getPrimaryKeyColumnInfo(invoker.getParentTableInfos()).getPropertyName()));
+                            getPrimaryKeyColumnInfo(invoker.getParentTableInfo().getColumnsInfo()).getPropertyName()));
                 } else {
                     sb.append(String.format("#{%s.%s},\n", StringUtil.firstToLowerCase(invoker.getClassName()), info.getPropertyName()));
                 }
@@ -253,13 +254,13 @@ public class MapperTask extends AbstractTask {
      */
     public String updateProperties() {
         StringBuilder sb = new StringBuilder();
-        invoker.getTableInfos().forEach(ForEachUtil.withIndex((info, index) -> {
+        invoker.getTableInfo().getColumnsInfo().forEach(ForEachUtil.withIndex((info, index) -> {
             sb.append(index == 0 ? "" : Constant.SPACE_8);
             if (StringUtil.isEmpty(invoker.getRelationalTableName()) && !StringUtil.isEmpty(invoker.getForeignKey())) {
                 if (info.getColumnName().equals(invoker.getForeignKey())) {
                     sb.append(String.format("`%s` = #{%s.%s},\n", info.getColumnName(),
                             StringUtil.firstToLowerCase(invoker.getParentClassName()),
-                            getPrimaryKeyColumnInfo(invoker.getParentTableInfos()).getPropertyName()));
+                            getPrimaryKeyColumnInfo(invoker.getParentTableInfo().getColumnsInfo()).getPropertyName()));
                 } else {
                     sb.append(String.format("`%s` = #{%s},\n", info.getColumnName(), info.getPropertyName()));
                 }
@@ -281,20 +282,20 @@ public class MapperTask extends AbstractTask {
             // 多对多
             sb.append(String.format("LEFT JOIN `%s` ON `%s`.`%s` = `%s`.`%s`", invoker.getRelationalTableName(),
                     invoker.getRelationalTableName(), invoker.getForeignKey(), invoker.getTableName(),
-                    getPrimaryKeyColumnInfo(invoker.getTableInfos()).getColumnName()));
+                    getPrimaryKeyColumnInfo(invoker.getTableInfo().getColumnsInfo()).getColumnName()));
             sb.append("\n").append(Constant.SPACE_8);
             sb.append(String.format("LEFT JOIN `%s` ON `%s`.`%s` = `%s`.`%s`", invoker.getParentTableName(),
-                    invoker.getParentTableName(), getPrimaryKeyColumnInfo(invoker.getParentTableInfos()).getColumnName(),
+                    invoker.getParentTableName(), getPrimaryKeyColumnInfo(invoker.getParentTableInfo().getColumnsInfo()).getColumnName(),
                     invoker.getRelationalTableName(), invoker.getParentForeignKey()));
         } else if (!StringUtil.isEmpty(invoker.getParentForeignKey())) {
             // 一对多
             sb.append(String.format("LEFT JOIN `%s` ON `%s`.`%s` = `%s`.`%s`", invoker.getParentTableName(),
                     invoker.getParentTableName(), invoker.getParentForeignKey(), invoker.getTableName(),
-                    getPrimaryKeyColumnInfo(invoker.getTableInfos()).getColumnName()));
+                    getPrimaryKeyColumnInfo(invoker.getTableInfo().getColumnsInfo()).getColumnName()));
         } else if (!StringUtil.isEmpty(invoker.getForeignKey())) {
             // 多对一
             sb.append(String.format("LEFT JOIN `%s` ON `%s`.%s = `%s`.`%s`", invoker.getParentTableName(),
-                    invoker.getParentTableName(), getPrimaryKeyColumnInfo(invoker.getParentTableInfos()).getColumnName(),
+                    invoker.getParentTableName(), getPrimaryKeyColumnInfo(invoker.getParentTableInfo().getColumnsInfo()).getColumnName(),
                     invoker.getTableName(), invoker.getForeignKey()));
         }
         return sb.toString();

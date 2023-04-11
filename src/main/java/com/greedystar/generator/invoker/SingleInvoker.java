@@ -11,12 +11,11 @@ import com.greedystar.generator.utils.StringUtil;
 public class SingleInvoker extends AbstractInvoker {
 
     private SingleInvoker() {
-
     }
 
     @Override
     protected void queryMetaData() throws Exception {
-        tableInfos = connectionUtil.getMetaData(tableName);
+        tableInfo = connectionUtil.getTableInfo(tableName);
     }
 
     @Override

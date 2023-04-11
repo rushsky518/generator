@@ -20,6 +20,9 @@ public abstract class AbstractInvoker implements Invoker {
      * 主表名
      */
     protected String tableName;
+
+    protected TableInfo tableInfo;
+
     /**
      * 主类名
      */
@@ -44,14 +47,11 @@ public abstract class AbstractInvoker implements Invoker {
      * 父表外键列名
      */
     protected String parentForeignKey;
-    /**
-     * 主表元数据
-     */
-    protected List<ColumnInfo> tableInfos;
+
     /**
      * 父表元数据
      */
-    protected List<ColumnInfo> parentTableInfos;
+    protected TableInfo parentTableInfo;
     /**
      * 数据库连接工具
      */
@@ -103,10 +103,6 @@ public abstract class AbstractInvoker implements Invoker {
         }
     }
 
-    public void setTableName(String tableName) {
-        this.tableName = tableName;
-    }
-
     public void setClassName(String className) {
         this.className = className;
     }
@@ -129,10 +125,6 @@ public abstract class AbstractInvoker implements Invoker {
 
     public void setParentForeignKey(String parentForeignKey) {
         this.parentForeignKey = parentForeignKey;
-    }
-
-    public String getTableName() {
-        return tableName;
     }
 
     public String getClassName() {
@@ -159,19 +151,27 @@ public abstract class AbstractInvoker implements Invoker {
         return parentForeignKey;
     }
 
-    public List<ColumnInfo> getTableInfos() {
-        return tableInfos;
+    public TableInfo getParentTableInfo() {
+        return parentTableInfo;
     }
 
-    public void setTableInfos(List<ColumnInfo> tableInfos) {
-        this.tableInfos = tableInfos;
+    public void setParentTableInfo(TableInfo parentTableInfo) {
+        this.parentTableInfo = parentTableInfo;
     }
 
-    public List<ColumnInfo> getParentTableInfos() {
-        return parentTableInfos;
+    public String getTableName() {
+        return tableName;
     }
 
-    public void setParentTableInfos(List<ColumnInfo> parentTableInfos) {
-        this.parentTableInfos = parentTableInfos;
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
+    }
+
+    public TableInfo getTableInfo() {
+        return tableInfo;
+    }
+
+    public void setTableInfo(TableInfo tableInfo) {
+        this.tableInfo = tableInfo;
     }
 }

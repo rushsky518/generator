@@ -10,13 +10,11 @@ import javax.persistence.*;
 import org.hibernate.annotations.GenericGenerator;
 </#if>
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.util.Date;
-import java.util.List;
 
 /**
  * ${Remarks}
- *
+ * table: ${TableName}
  * @author ${Configuration.author}
  * @date ${.now?date}
  */

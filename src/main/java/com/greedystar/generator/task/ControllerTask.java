@@ -46,7 +46,7 @@ public class ControllerTask extends AbstractTask {
         controllerData.put("ClassName", ConfigUtil.getConfiguration().getName().getEntity()
                 .replace(Constant.PLACEHOLDER, invoker.getClassName()));
         controllerData.put("EntityName", StringUtil.firstToLowerCase(invoker.getClassName()));
-        controllerData.put("pkType", getPrimaryKeyType(invoker.getTableInfos()));
+        controllerData.put("pkType", getPrimaryKeyType(invoker.getTableInfo().getColumnsInfo()));
         String filePath = FileUtil.getSourcePath() + StringUtil.package2Path(ConfigUtil.getConfiguration().getPackageName()) +
                 StringUtil.package2Path(ConfigUtil.getConfiguration().getPath().getController());
         String fileName = ConfigUtil.getConfiguration().getName().getController().replace(Constant.PLACEHOLDER, invoker.getClassName()) + ".java";

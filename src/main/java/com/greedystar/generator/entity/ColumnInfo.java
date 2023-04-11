@@ -34,21 +34,16 @@ public class ColumnInfo implements Serializable {
      */
     private String remarks;
     /**
-     * 表备注
-     */
-    private String tableRemarks;
-    /**
      * 是否主键
      */
     private boolean isPrimaryKey;
 
-    public ColumnInfo(String columnName, int columnType, String remarks, String tableRemarks, boolean isPrimaryKey) {
+    public ColumnInfo(String columnName, int columnType, String remarks, boolean isPrimaryKey) {
         this.columnName = columnName;
         this.propertyName = StringUtil.columnName2PropertyName(columnName);
         this.columnType = JDBCType.valueOf(columnType);
         this.propertyType = ConvertorUtil.parseTypeFormSqlType(JDBCType.valueOf(columnType));
         this.remarks = remarks;
-        this.tableRemarks = tableRemarks;
         this.isPrimaryKey = isPrimaryKey;
     }
 
@@ -90,14 +85,6 @@ public class ColumnInfo implements Serializable {
 
     public void setRemarks(String remarks) {
         this.remarks = remarks;
-    }
-
-    public String getTableRemarks() {
-        return tableRemarks;
-    }
-
-    public void setTableRemarks(String tableRemarks) {
-        this.tableRemarks = tableRemarks;
     }
 
     public boolean isPrimaryKey() {

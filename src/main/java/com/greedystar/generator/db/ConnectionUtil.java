@@ -2,6 +2,7 @@ package com.greedystar.generator.db;
 
 
 import com.greedystar.generator.entity.ColumnInfo;
+import com.greedystar.generator.invoker.base.TableInfo;
 import com.greedystar.generator.utils.ConfigUtil;
 import com.greedystar.generator.utils.StringUtil;
 
@@ -57,18 +58,17 @@ public class ConnectionUtil {
      * @return 包含表结构数据的列表
      * @throws Exception Exception
      */
-    public List<ColumnInfo> getMetaData(String tableName) throws Exception {
+    public TableInfo getTableInfo(String tableName) throws Exception {
         if (!initConnection()) {
             throw new Exception("Failed to connect to database at url:" + ConfigUtil.getConfiguration().getDb().getUrl());
         }
         // 获取主键
         String primaryKey = getPrimaryKey(tableName);
-        // 获取表注释
         String tableRemark = getTableRemark(tableName);
         // 获取列信息
-        List<ColumnInfo> columnInfos = getColumnInfos(tableName, primaryKey, tableRemark);
+        List<ColumnInfo> columnsInfo = getColumnsInfo(tableName, primaryKey);
         closeConnection();
-        return columnInfos;
+        return new TableInfo(tableName, tableRemark, columnsInfo);
     }
 
     /**
@@ -97,7 +97,7 @@ public class ConnectionUtil {
      * @return 表注释
      * @throws SQLException SQLException
      */
-    private String getTableRemark(String tableName) throws SQLException {
+    public String getTableRemark(String tableName) throws SQLException {
         // 获取表注释
         String tableRemark = null;
         if (connection.getMetaData().getURL().contains("sqlserver")) { // SQLServer
@@ -107,7 +107,7 @@ public class ConnectionUtil {
                     DataBaseFactory.getSchema(connection), tableName, new String[]{"TABLE"});
             if (tableResultSet.next()) {
                 tableRemark = StringUtil.isEmpty(tableResultSet.getString("REMARKS")) ?
-                        "Unknown Table" : tableResultSet.getString("REMARKS");
+                        "Unknown" : tableResultSet.getString("REMARKS");
             }
             tableResultSet.close();
         }
@@ -119,37 +119,37 @@ public class ConnectionUtil {
      *
      * @param tableName 表名
      * @param primaryKey 主键列名
-     * @param tableRemark 表注释
      * @return 列信息
      * @throws Exception Exception
      */
-    private List<ColumnInfo> getColumnInfos(String tableName, String primaryKey, String tableRemark) throws Exception {
+    private List<ColumnInfo> getColumnsInfo(String tableName, String primaryKey) throws Exception {
         // 获取列信息
-        List<ColumnInfo> columnInfos = new ArrayList<>();
+        List<ColumnInfo> columnsInfo = new ArrayList<>();
         ResultSet columnResultSet = connection.getMetaData().getColumns(DataBaseFactory.getCatalog(connection),
                 DataBaseFactory.getSchema(connection), tableName, "%");
         while (columnResultSet.next()) {
             boolean isPrimaryKey;
-            if (columnResultSet.getString("COLUMN_NAME").equals(primaryKey)) {
+            String columnName = columnResultSet.getString("COLUMN_NAME");
+            if (columnName.equals(primaryKey)) {
                 isPrimaryKey = true;
             } else {
                 isPrimaryKey = false;
             }
-            ColumnInfo info = new ColumnInfo(columnResultSet.getString("COLUMN_NAME"), columnResultSet.getInt("DATA_TYPE"),
-                    StringUtil.isEmpty(columnResultSet.getString("REMARKS")) ? "Unknown" : columnResultSet.getString("REMARKS"),
-                    tableRemark, isPrimaryKey);
-            columnInfos.add(info);
+            ColumnInfo info = new ColumnInfo(columnName, columnResultSet.getInt("DATA_TYPE"),
+                    StringUtil.isEmpty(columnResultSet.getString("REMARKS")) ? columnName : columnResultSet.getString("REMARKS"),
+                    isPrimaryKey);
+            columnsInfo.add(info);
         }
         columnResultSet.close();
-        if (columnInfos.size() == 0) {
+        if (columnsInfo.size() == 0) {
             closeConnection();
             throw new Exception("Can not find column information from table:" + tableName);
         }
         // SQLServer需要单独处理列REMARKS
         if (connection.getMetaData().getURL().contains("sqlserver")) {
-            parseSqlServerColumnRemarks(tableName, columnInfos);
+            parseSqlServerColumnRemarks(tableName, columnsInfo);
         }
-        return columnInfos;
+        return columnsInfo;
     }
 
     /**
@@ -168,7 +168,7 @@ public class ConnectionUtil {
         preparedStatement.setString(1, tableName);
         ResultSet resultSet = preparedStatement.executeQuery();
         while (resultSet.next()) {
-            tableRemarks = StringUtil.isEmpty(resultSet.getString("REMARKS")) ? "Unknown Table" : resultSet.getString("REMARKS");
+            tableRemarks = StringUtil.isEmpty(resultSet.getString("REMARKS")) ? tableName : resultSet.getString("REMARKS");
         }
         resultSet.close();
         preparedStatement.close();

@@ -20,9 +20,14 @@ import java.util.Map;
  */
 public class EntityTask extends AbstractTask {
     /**
+     * 表备注
+     */
+    private String tableRemarks;
+
+    /**
      * 业务表元数据
      */
-    private List<ColumnInfo> tableInfos;
+    private List<ColumnInfo> columns;
     /**
      * 任务模式
      */
@@ -32,9 +37,9 @@ public class EntityTask extends AbstractTask {
         this.mode = mode;
         this.invoker = invoker;
         if (Mode.ENTITY_MAIN.equals(mode)) {
-            this.tableInfos = invoker.getTableInfos();
+            this.columns = invoker.getTableInfo().getColumnsInfo();
         } else if (Mode.ENTITY_PARENT.equals(mode)) {
-            this.tableInfos = invoker.getParentTableInfos();
+            this.columns = invoker.getParentTableInfo().getColumnsInfo();
         }
     }
 
@@ -42,19 +47,16 @@ public class EntityTask extends AbstractTask {
     public void run() throws IOException, TemplateException {
         // 构造Entity填充数据
         String className = null;
-        String remarks = null;
         if (Mode.ENTITY_MAIN.equals(mode)) {
             className = ConfigUtil.getConfiguration().getName().getEntity().replace(Constant.PLACEHOLDER, invoker.getClassName());
-            remarks = invoker.getTableName();
         } else if (Mode.ENTITY_PARENT.equals(mode)) {
             className = ConfigUtil.getConfiguration().getName().getEntity().replace(Constant.PLACEHOLDER, invoker.getParentClassName());
-            remarks = invoker.getParentTableInfos().get(0).getTableRemarks();
         }
         Map<String, Object> entityData = new HashMap<>();
         entityData.put("Configuration", ConfigUtil.getConfiguration());
         entityData.put("TableName", invoker.getTableName());
         entityData.put("ClassName", className);
-        entityData.put("Remarks", remarks);
+        entityData.put("Remarks", invoker.getTableInfo().getTableRemark());
         entityData.put("Properties", entityProperties(invoker));
         entityData.put("Methods", entityMethods(invoker));
         String filePath = FileUtil.getSourcePath() + StringUtil.package2Path(ConfigUtil.getConfiguration().getPackageName())
@@ -72,7 +74,7 @@ public class EntityTask extends AbstractTask {
      */
     public String entityProperties(AbstractInvoker invoker) {
         StringBuilder sb = new StringBuilder();
-        tableInfos.forEach(ForEachUtil.withIndex((info, index) -> {
+        columns.forEach(ForEachUtil.withIndex((info, index) -> {
             if (info.getColumnName().equals(invoker.getForeignKey())) {
                 return;
             }
@@ -111,7 +113,7 @@ public class EntityTask extends AbstractTask {
             return "";
         }
         StringBuilder sb = new StringBuilder();
-        tableInfos.forEach(ForEachUtil.withIndex((info, index) -> {
+        columns.forEach(ForEachUtil.withIndex((info, index) -> {
             if (info.getColumnName().equals(invoker.getForeignKey())) {
                 return;
             }
